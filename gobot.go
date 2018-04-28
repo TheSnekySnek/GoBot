@@ -14,8 +14,7 @@ import (
 	"github.com/rylio/ytdl"
 )
 
-//VoiceChannel Current VC
-var VoiceChannel *discordgo.VoiceConnection
+var curVC *discordgo.VoiceConnection
 var isPlaying = false
 var skip = make(chan bool)
 var session *discordgo.Session
@@ -57,7 +56,7 @@ func main() {
 		return
 	}
 
-	VoiceChannel = vc
+	curVC = vc
 
 	fmt.Println("Loading Playlist...")
 	pl, err = getPlaylist()
@@ -83,8 +82,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		playYT(args[1], m)
 	}
 	if args[0] == "!close" {
-
-		session.Close()
+		if isMod(m.Author.ID) {
+			session.Close()
+			os.Exit(0)
+		} else {
+			session.ChannelMessageSend(m.ChannelID, "Denied")
+		}
 	}
 	if args[0] == "!skip" {
 		skip <- true
@@ -103,8 +106,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	}
 	if args[0] == "!clear" {
-		queue = queue[:0]
-		session.ChannelMessageSend(m.ChannelID, "The queue has been cleared")
+		if isMod(m.Author.ID) {
+			queue = queue[:0]
+			session.ChannelMessageSend(m.ChannelID, "The queue has been cleared")
+		} else {
+			session.ChannelMessageSend(m.ChannelID, "Denied")
+		}
 	}
 
 }
@@ -165,7 +172,7 @@ func play(url string) {
 	if !isPlaying {
 		fmt.Println("Speak")
 		isPlaying = true
-		dgvoice.PlayAudioFile(VoiceChannel, url, skip)
+		dgvoice.PlayAudioFile(curVC, url, skip)
 		isPlaying = false
 		time.Sleep(time.Second)
 		curSong.Time = 0
@@ -177,4 +184,13 @@ func play(url string) {
 			playYT(pl.Songs[rand.Intn(len(pl.Songs))], nil)
 		}
 	}
+}
+
+func isMod(userID string) bool {
+	for i := 0; i < len(config.Mods); i++ {
+		if userID == config.Mods[i] {
+			return true
+		}
+	}
+	return false
 }

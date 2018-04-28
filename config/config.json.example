@@ -1,6 +1,9 @@
 {
-    "Token": "",
-    "Guild": "",
-    "VC": "",
-    "TC": ""
+    "Token": "..Token..",
+    "Guild": "..Guild ID..",
+    "VC": "..VoiceChanel ID..",
+    "TC": "..TextChanel ID..",
+    "Mods": [
+        "..Mod ID.."
+    ]
 }

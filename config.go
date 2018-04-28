@@ -6,10 +6,11 @@ import (
 )
 
 type configuration struct {
-	Guild string `json:"Guild"`
-	VC    string `json:"VC"`
-	TC    string `json:"TC"`
-	Token string `json:"Token"`
+	Guild string   `json:"Guild"`
+	VC    string   `json:"VC"`
+	TC    string   `json:"TC"`
+	Token string   `json:"Token"`
+	Mods  []string `json:"Mods"`
 }
 
 func loadConfig() (configuration, error) {
