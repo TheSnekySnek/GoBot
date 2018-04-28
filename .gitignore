@@ -1,0 +1,4 @@
+config/config.json
+bin/
+debug
+.vscode/
