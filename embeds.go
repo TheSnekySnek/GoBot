@@ -11,27 +11,21 @@ import (
 func nowPlaying(song song) *discordgo.MessageEmbed {
 	var username string
 	var avatar string
-	var min int
-	var sec int
-	var tm string
-
-	min = song.Time / 60
-	sec = song.Time - min*60
-
-	if min < 10 && sec < 10 {
-		tm = "0" + strconv.Itoa(min) + ":0" + strconv.Itoa(sec)
-	} else if min < 10 {
-		tm = "0" + strconv.Itoa(min) + ":" + strconv.Itoa(sec)
+	var out1 time.Time
+	diff := time.Now().Sub(song.Time)
+	if diff > song.Duration {
+		out1 = time.Time{}.Add(song.Duration)
 	} else {
-		tm = strconv.Itoa(min) + ":" + strconv.Itoa(sec)
+		out1 = time.Time{}.Add(diff)
 	}
+	out2 := time.Time{}.Add(song.Duration)
 
 	if song.User != nil {
 		username = song.User.Username
 		avatar = song.User.AvatarURL("1024x1024")
 	} else {
 		username = "Playlist"
-		avatar = "https://cdn.discordapp.com/avatars/344604921485721610/eadc5467d4981aa9051356cdd3ee3673.png?size=2048"
+		avatar = "https://cdn.discordapp.com/avatars/344604921485721610/ed0b0758b187107d09a9fecfe243ec9d.jpg?size=1024"
 	}
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
@@ -42,7 +36,7 @@ func nowPlaying(song song) *discordgo.MessageEmbed {
 		Fields: []*discordgo.MessageEmbedField{
 			&discordgo.MessageEmbedField{
 				Name:   "Timestamp",
-				Value:  tm,
+				Value:  out1.Format("04:05") + " / " + out2.Format("04:05"),
 				Inline: true,
 			},
 		},

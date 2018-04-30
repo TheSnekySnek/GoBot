@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -9,6 +11,7 @@ type song struct {
 	URL       string
 	VDURL     string
 	Thumbnail string
-	Time      int
+	Time      time.Time
+	Duration  time.Duration
 	User      *discordgo.User
 }
