@@ -14,6 +14,7 @@ import (
 var curVC *discordgo.VoiceConnection
 var isPlaying = false
 var skip = make(chan bool)
+var skop = make(chan bool)
 var session *discordgo.Session
 var curSong song
 var config configuration
@@ -59,17 +60,10 @@ func main() {
 
 	fmt.Println("Loading Playlist...")
 	pl, err = getPlaylist()
-
 	playYT(pl.Songs[0], nil)
-
 	fmt.Println("Bot is now running")
-	var gracefulStop = make(chan os.Signal)
-	sig := <-gracefulStop
-	fmt.Printf("caught sig: %+v", sig)
-	fmt.Println("Wait for 2 second to finish processing")
-	time.Sleep(2 * time.Second)
+	<-skop
 	dg.Close()
-	os.Exit(0)
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -94,8 +88,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	if args[0] == "!close" {
 		if isMod(m.Author.ID) {
-			curVC.Close()
-			session.Close()
+			s.Close()
 			os.Exit(0)
 		} else {
 			session.ChannelMessageSend(m.ChannelID, "Denied")
