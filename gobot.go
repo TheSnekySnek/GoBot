@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,6 +23,7 @@ var queue []song
 var pl playlist
 var modifier = 0
 var firstBoot = true
+var skipMan []string
 
 func main() {
 	fmt.Println("Loading Config...")
@@ -61,7 +63,7 @@ func main() {
 	fmt.Println("Loading Playlist...")
 	pl, err = getPlaylist()
 	if len(pl.Songs) > 0 {
-		playYT(pl.Songs[0].URL, true, nil, func(sn song) {})
+		playYT(pl.Songs[0].URL, true, pl.Songs[0].User, func(sn song) {})
 	} else {
 		session.ChannelMessageSend(config.TC, "Playlist is empty. Use !add [url] to add a song")
 	}
@@ -82,12 +84,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	cont := strings.Replace(m.Content, args[0]+" ", "", -1)
 
 	if args[0] == "!play" {
-		if strings.HasPrefix(cont, "http") {
-			playYT(cont, true, m, func(sn song) {})
+		if strings.Contains(cont, "spotify.com") {
+			session.ChannelMessageSend(m.ChannelID, "Converting Spotify playlist... This can take a while")
+			searchSpotify(cont, m)
+		} else if strings.HasPrefix(cont, "http") {
+			playYT(cont, true, m.Author, func(sn song) {})
 		} else {
 			session.ChannelMessageSend(m.ChannelID, "Searching for "+cont)
 			searchYT(cont, func(link string) {
-				playYT(link, true, m, func(sn song) {})
+				playYT(link, true, m.Author, func(sn song) {})
 			})
 		}
 	}
@@ -100,11 +105,27 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 	if args[0] == "!skip" {
-		skip <- true
+		if !contains(skipMan, m.Author.ID) {
+			skipMan = append(skipMan, m.Author.ID)
+			p := usersInVC()
+			if len(skipMan) > (p-1)/2 {
+				session.ChannelMessageSend(m.ChannelID, "Skipping song...")
+				skip <- true
+				skipMan = skipMan[:0]
+
+			} else {
+				session.ChannelMessageSend(m.ChannelID, strconv.Itoa(len(skipMan))+"/"+strconv.Itoa((p-1)/2)+" Votes to skip")
+			}
+		}
+
 	}
 	if args[0] == "!np" || args[0] == "!song" {
 		em := nowPlaying(curSong)
-		session.ChannelMessageSendEmbed(m.ChannelID, em)
+		_, err := session.ChannelMessageSendEmbed(m.ChannelID, em)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
 	}
 	if args[0] == "!queue" {
 		if len(queue) > 0 {
@@ -156,18 +177,28 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if isMod(m.Author.ID) {
 			fmt.Println(cont)
 			if strings.HasPrefix(cont, "http") {
-				playYT(cont, false, m, func(sn song) {
+				playYT(cont, false, m.Author, func(sn song) {
 					addPlaylist(sn)
 					session.ChannelMessageSend(m.ChannelID, sn.Name+" has been added to the playlist")
 				})
 			} else {
 				searchYT(cont, func(link string) {
-					playYT(link, false, m, func(sn song) {
+					playYT(link, false, m.Author, func(sn song) {
 						addPlaylist(sn)
 						session.ChannelMessageSend(m.ChannelID, sn.Name+" has been added to the playlist")
 					})
 				})
 			}
+		}
+	}
+	if args[0] == "!delete" {
+		if isMod(m.Author.ID) {
+			num, err := strconv.Atoi(cont)
+			if err != nil {
+				session.ChannelMessageSend(m.ChannelID, "Please provide a number")
+				return
+			}
+			removePlaylist(num)
 		}
 	}
 
@@ -177,11 +208,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 }
 
-func playYT(link string, playNext bool, m *discordgo.MessageCreate, callback func(song)) {
+func playYT(link string, playNext bool, u *discordgo.User, callback func(song)) {
 	video, err := ytdl.GetVideoInfo(link)
 
 	if err != nil {
-		session.ChannelMessageSend(m.ChannelID, "Error while accessing video")
+		session.ChannelMessageSend(config.TC, "This video isn't available")
+		return
 	}
 
 	for _, format := range video.Formats {
@@ -201,11 +233,7 @@ func playYT(link string, playNext bool, m *discordgo.MessageCreate, callback fun
 			nSong.Duration = video.Duration
 
 			nSong.Name = video.Title
-			if m != nil {
-				nSong.User = m.Author
-			} else {
-				nSong.User = nil
-			}
+			nSong.User = u
 
 			if playNext {
 				if isPlaying {
@@ -230,6 +258,7 @@ func play(url string, mod int) {
 		PlayAudioFile(curVC, url, mod, skip)
 		fmt.Println("Player stopped")
 		isPlaying = false
+		skipMan = skipMan[:0]
 		time.Sleep(2 * time.Second)
 		if len(queue) > 0 {
 			fmt.Println("Playing Queue")
@@ -273,6 +302,27 @@ func isUserInVC(session *discordgo.Session, userid string) bool {
 				}
 				return false
 			}
+		}
+	}
+	return false
+}
+
+func usersInVC() int {
+	i := 0
+	for _, guild := range session.State.Guilds {
+		for _, vs := range guild.VoiceStates {
+			if vs.ChannelID == config.VC {
+				i++
+			}
+		}
+	}
+	return i
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
 		}
 	}
 	return false

@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly"
 )
 
@@ -22,6 +24,30 @@ func searchYT(query string, callback func(string)) {
 	c.Visit("https://www.youtube.com/results?search_query=" + query)
 }
 
+func searchSpotify(query string, m *discordgo.MessageCreate) {
+	rep := false
+	t1 := strings.LastIndex(query, "?")
+	if t1 > 0 {
+		query = query[0:t1]
+	}
+	fmt.Println(query)
+	c := colly.NewCollector()
+	c.SetRequestTimeout(90 * time.Second)
+	c.OnHTML("#tubetify-generate tr > td > a", func(e *colly.HTMLElement) {
+		playYT(strings.Replace(e.Text, "#", "", -1), false, m.Author, func(s song) {
+			queue = append(queue, s)
+			if !rep {
+				session.ChannelMessageSend(config.TC, "Playlist has been added")
+			}
+			rep = true
+		})
+	})
+	err := c.Post("https://tubetify.com/generate", map[string]string{"spotify-tracks": query})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func searchLyrics(query string, callback func(string, string)) {
 	callTime := time.Now().UnixNano() / int64(time.Millisecond)
 	step := 0
@@ -29,18 +55,19 @@ func searchLyrics(query string, callback func(string, string)) {
 	lyrics := ""
 	subLyr := 999
 	t1 := strings.Index(query, "[")
-	t2 := strings.Index(query, "(")
-	t3 := strings.Index(query, "-")
-	t4 := strings.LastIndex(query, "-")
 	if t1 > 0 {
 		query = query[0 : t1-1]
 	}
+	t2 := strings.Index(query, "(")
 	if t2 > 0 {
 		query = query[0 : t2-1]
 	}
+	t3 := strings.Index(query, "-")
+	t4 := strings.LastIndex(query, "-")
 	if t3 != t4 {
 		query = query[0 : t4-1]
 	}
+
 	c := colly.NewCollector()
 	c.OnResponse(func(r *colly.Response) {
 		if step == 1 {

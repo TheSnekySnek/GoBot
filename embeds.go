@@ -9,6 +9,7 @@ import (
 )
 
 func nowPlaying(song song) *discordgo.MessageEmbed {
+	fmt.Printf("%+v\n", song)
 	var username string
 	var avatar string
 	var out1 time.Time
@@ -32,7 +33,7 @@ func nowPlaying(song song) *discordgo.MessageEmbed {
 			Name:    "Song added by " + username,
 			IconURL: avatar,
 		},
-		Color: 0x2eaae5,
+		Color: 0xe62118,
 		Fields: []*discordgo.MessageEmbedField{
 			&discordgo.MessageEmbedField{
 				Name:   "Timestamp",
@@ -45,7 +46,7 @@ func nowPlaying(song song) *discordgo.MessageEmbed {
 		},
 		Timestamp: time.Now().Format(time.RFC3339),
 		Title:     "**" + song.Name + "**",
-		URL:       song.URL,
+		URL:       "https://youtube.com/watch?v=" + song.URL,
 		Footer: &discordgo.MessageEmbedFooter{
 			Text: "GoBot OpenSource MB by TheSnekySnek",
 		},
@@ -57,7 +58,7 @@ func nowPlaying(song song) *discordgo.MessageEmbed {
 func getQueue(songs []song) *discordgo.MessageEmbed {
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{},
-		Color:  0x2eaae5,
+		Color:  0xe62118,
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: songs[0].Thumbnail,
 		},
@@ -80,6 +81,8 @@ func getQueue(songs []song) *discordgo.MessageEmbed {
 				Value:  "...",
 				Inline: true,
 			})
+			fmt.Println("Send")
+			return embed
 		}
 	}
 
@@ -96,7 +99,7 @@ func displayPlaylist(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{},
-		Color:  0x2eaae5,
+		Color:  0xe62118,
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: pl.Songs[0].Thumbnail,
 		},
@@ -111,7 +114,7 @@ func displayPlaylist(s *discordgo.Session, m *discordgo.MessageCreate) {
 			session.ChannelMessageSendEmbed(m.ChannelID, embed)
 			embed = &discordgo.MessageEmbed{
 				Author: &discordgo.MessageEmbedAuthor{},
-				Color:  0x2eaae5,
+				Color:  0xe62118,
 				Thumbnail: &discordgo.MessageEmbedThumbnail{
 					URL: pl.Songs[0].Thumbnail,
 				},
