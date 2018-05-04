@@ -6,7 +6,7 @@ import (
 )
 
 type playlist struct {
-	Songs []string `json:"Songs"`
+	Songs []song `json:"Songs"`
 }
 
 func getPlaylist() (playlist, error) {
@@ -17,4 +17,23 @@ func getPlaylist() (playlist, error) {
 	}
 	json.Unmarshal(file, &pl)
 	return pl, nil
+}
+
+func addPlaylist(s song) {
+	var pl playlist
+	file, err := ioutil.ReadFile("./config/playlist.json")
+	if err != nil {
+		return
+	}
+	json.Unmarshal(file, &pl)
+	pl.Songs = append(pl.Songs, s)
+	sv, err2 := json.Marshal(pl)
+	if err2 != nil {
+		return
+	}
+	err3 := ioutil.WriteFile("./config/playlist.json", sv, 0644)
+	if err3 != nil {
+		return
+	}
+	return
 }

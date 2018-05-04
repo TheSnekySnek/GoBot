@@ -60,7 +60,12 @@ func main() {
 
 	fmt.Println("Loading Playlist...")
 	pl, err = getPlaylist()
-	playYT(pl.Songs[0], nil)
+	if len(pl.Songs) > 0 {
+		playYT(pl.Songs[0].URL, true, nil, func(sn song) {})
+	} else {
+		session.ChannelMessageSend(config.TC, "Playlist is empty. Use !add [url] to add a song")
+	}
+
 	fmt.Println("Bot is now running")
 	<-skop
 	dg.Close()
@@ -74,15 +79,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	var args = strings.Split(m.Content, " ")
-	cont := strings.Replace(m.Content, "!play ", "", -1)
+	cont := strings.Replace(m.Content, args[0]+" ", "", -1)
 
 	if args[0] == "!play" {
 		if strings.HasPrefix(cont, "http") {
-			playYT(cont, m)
+			playYT(cont, true, m, func(sn song) {})
 		} else {
 			session.ChannelMessageSend(m.ChannelID, "Searching for "+cont)
 			searchYT(cont, func(link string) {
-				playYT(link, m)
+				playYT(link, true, m, func(sn song) {})
 			})
 		}
 	}
@@ -110,6 +115,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 	}
+
 	if args[0] == "!clear" {
 		if isMod(m.Author.ID) {
 			queue = queue[:0]
@@ -138,7 +144,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				session.ChannelMessageSend(m.ChannelID, lyrics)
 				session.ChannelMessageSend(m.ChannelID, "\n\nQuery took **"+execTime+"ms** to execute")
 			} else {
-				fmt.Println(lyrics)
 				lyrArr := strings.Split(lyrics, "\n\n")
 				for i := 0; i < len(lyrArr); i++ {
 					session.ChannelMessageSend(m.ChannelID, lyrArr[i])
@@ -147,19 +152,42 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		})
 	}
+	if args[0] == "!add" {
+		if isMod(m.Author.ID) {
+			fmt.Println(cont)
+			if strings.HasPrefix(cont, "http") {
+				playYT(cont, false, m, func(sn song) {
+					addPlaylist(sn)
+					session.ChannelMessageSend(m.ChannelID, sn.Name+" has been added to the playlist")
+				})
+			} else {
+				searchYT(cont, func(link string) {
+					playYT(link, false, m, func(sn song) {
+						addPlaylist(sn)
+						session.ChannelMessageSend(m.ChannelID, sn.Name+" has been added to the playlist")
+					})
+				})
+			}
+		}
+	}
+
+	if args[0] == "!playlist" {
+		displayPlaylist(s, m)
+	}
 
 }
 
-func playYT(link string, m *discordgo.MessageCreate) {
+func playYT(link string, playNext bool, m *discordgo.MessageCreate, callback func(song)) {
 	video, err := ytdl.GetVideoInfo(link)
+
 	if err != nil {
 		session.ChannelMessageSend(m.ChannelID, "Error while accessing video")
-		return
 	}
 
 	for _, format := range video.Formats {
-		if format.AudioEncoding == "opus" || format.AudioEncoding == "aac" || format.AudioEncoding == "vorbis" {
+		if format.AudioEncoding == "opus" {
 			var nSong song
+			fmt.Println("found")
 			nSong.URL = link
 			data, err := video.GetDownloadURL(format)
 			if err != nil {
@@ -178,13 +206,18 @@ func playYT(link string, m *discordgo.MessageCreate) {
 			} else {
 				nSong.User = nil
 			}
-			if isPlaying {
-				queue = append(queue, nSong)
-				session.ChannelMessageSend(config.TC, nSong.Name+" has been added to the queue")
-			} else {
-				curSong = nSong
-				go play(url, modifier)
+
+			if playNext {
+				if isPlaying {
+					queue = append(queue, nSong)
+					session.ChannelMessageSend(config.TC, nSong.Name+" has been added to the queue")
+				} else {
+					curSong = nSong
+					go play(url, modifier)
+				}
 			}
+			fmt.Println(nSong.Name)
+			callback(nSong)
 			return
 		}
 	}
@@ -206,7 +239,17 @@ func play(url string, mod int) {
 			//session.ChannelMessageSend(config.TC, "Playing "+curSong.Name)
 		} else {
 			fmt.Println("Playing Pl")
-			playYT(pl.Songs[rand.Intn(len(pl.Songs))], nil)
+			pl, err := getPlaylist()
+			if err != nil {
+				fmt.Println("Error Getting PL")
+				return
+			}
+			if len(pl.Songs) > 0 {
+				playYT(pl.Songs[rand.Intn(len(pl.Songs))].URL, true, nil, func(sn song) {})
+			} else {
+				session.ChannelMessageSend(config.TC, "Playlist is empty. Use !add [url] to add a song")
+			}
+
 		}
 	}
 }

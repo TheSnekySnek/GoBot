@@ -86,3 +86,48 @@ func getQueue(songs []song) *discordgo.MessageEmbed {
 	fmt.Println("Send")
 	return embed
 }
+
+func displayPlaylist(s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	pl, err := getPlaylist()
+	if err != nil {
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Author: &discordgo.MessageEmbedAuthor{},
+		Color:  0x2eaae5,
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: pl.Songs[0].Thumbnail,
+		},
+		Timestamp: time.Now().Format(time.RFC3339),
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: "GoBot OpenSource MB by TheSnekySnek",
+		},
+	}
+
+	for i := 0; i < len(pl.Songs); i++ {
+		if i%23 == 0 && i != 0 {
+			session.ChannelMessageSendEmbed(m.ChannelID, embed)
+			embed = &discordgo.MessageEmbed{
+				Author: &discordgo.MessageEmbedAuthor{},
+				Color:  0x2eaae5,
+				Thumbnail: &discordgo.MessageEmbedThumbnail{
+					URL: pl.Songs[0].Thumbnail,
+				},
+				Timestamp: time.Now().Format(time.RFC3339),
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: "GoBot OpenSource MB by TheSnekySnek",
+				},
+			}
+		} else {
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+				Name:   strconv.Itoa(i) + ". " + pl.Songs[i].Name,
+				Value:  "Added by " + pl.Songs[i].User.Username + "\n",
+				Inline: false,
+			})
+		}
+	}
+	session.ChannelMessageSendEmbed(m.ChannelID, embed)
+	return
+}

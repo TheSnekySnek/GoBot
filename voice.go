@@ -15,12 +15,13 @@ import (
 )
 
 const (
-	channels  int = 2                   // 1 for mono, 2 for stereo
-	frameRate int = 48000               // audio sampling rate
-	frameSize int = 960                 // uint16 size of each audio frame
-	maxBytes  int = (frameSize * 2) * 2 // max size of opus data
-	nightcore int = 38400
-	daycore   int = 57600
+	channels  int    = 2               // 1 for mono, 2 for stereo
+	frameRate int    = 48000           // audio sampling rate
+	frameSize int    = 960             // uint16 size of each audio frame
+	maxBytes  int    = (frameSize * 2) // max size of opus data
+	nightcore int    = 38400
+	daycore   int    = 57600
+	volume    string = "0.5"
 )
 
 var (
@@ -52,6 +53,7 @@ func SendPCM(v *discordgo.VoiceConnection, pcm <-chan []int16) {
 	var err error
 
 	opusEncoder, err = gopus.NewEncoder(frameRate, channels, gopus.Audio)
+	opusEncoder.SetBitrate(96000)
 
 	if err != nil {
 		OnError("NewEncoder Error", err)
@@ -68,6 +70,7 @@ func SendPCM(v *discordgo.VoiceConnection, pcm <-chan []int16) {
 		}
 
 		// try encoding pcm frame with Opus
+
 		opus, err := opusEncoder.Encode(recv, frameSize, maxBytes)
 		if err != nil {
 			OnError("Encoding Error", err)
@@ -96,14 +99,14 @@ func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, stop 
 		freq = daycore
 	}
 	// Create a shell command "object" to run.
-	run := exec.Command("ffmpeg", "-i", filename, "-f", "s16le", "-ar", strconv.Itoa(freq), "-ac", strconv.Itoa(channels), "pipe:1")
+	run := exec.Command("ffmpeg", "-i", filename, "-f", "s16le", "-ar", strconv.Itoa(freq), "-ac", strconv.Itoa(channels), "-analyzeduration", "0", "pipe:1")
 	ffmpegout, err := run.StdoutPipe()
 	if err != nil {
 		OnError("StdoutPipe Error", err)
 		return
 	}
 
-	ffmpegbuf := bufio.NewReaderSize(ffmpegout, 16384)
+	ffmpegbuf := bufio.NewReaderSize(ffmpegout, 16344)
 
 	// Starts the ffmpeg command
 	err = run.Start()
@@ -141,6 +144,7 @@ func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, stop 
 	close := make(chan bool)
 	go func() {
 		SendPCM(v, send)
+
 		close <- true
 	}()
 
@@ -156,7 +160,6 @@ func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, stop 
 				OnError("error reading from ffmpeg stdout", err)
 				return
 			}
-
 			// Send received PCM to the sendPCM channel
 			select {
 			case send <- audiobuf:
