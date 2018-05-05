@@ -15,13 +15,12 @@ import (
 )
 
 const (
-	channels  int    = 2               // 1 for mono, 2 for stereo
-	frameRate int    = 48000           // audio sampling rate
-	frameSize int    = 960             // uint16 size of each audio frame
-	maxBytes  int    = (frameSize * 2) // max size of opus data
-	nightcore int    = 38400
-	daycore   int    = 57600
-	volume    string = "0.5"
+	channels  int = 2               // 1 for mono, 2 for stereo
+	frameRate int = 48000           // audio sampling rate
+	frameSize int = 960             // uint16 size of each audio frame
+	maxBytes  int = (frameSize * 2) // max size of opus data
+	nightcore int = 38400
+	daycore   int = 57600
 )
 
 var (
@@ -90,7 +89,7 @@ func SendPCM(v *discordgo.VoiceConnection, pcm <-chan []int16) {
 // PlayAudioFile will play the given filename to the already connected
 // Discord voice server/channel.  voice websocket and udp socket
 // must already be setup before this will work.
-func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, stop <-chan bool) {
+func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, volume float64, stop <-chan bool) {
 	hasStopped = false
 	freq := frameRate
 	if mod == 1 {
@@ -98,6 +97,7 @@ func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, stop 
 	} else if mod == 2 {
 		freq = daycore
 	}
+	//vo := strconv.FormatFloat(volume/100, 'f', 2, 64)
 	// Create a shell command "object" to run.
 	run := exec.Command("ffmpeg", "-i", filename, "-f", "s16le", "-ar", strconv.Itoa(freq), "-ac", strconv.Itoa(channels), "-analyzeduration", "0", "pipe:1")
 	ffmpegout, err := run.StdoutPipe()
