@@ -45,7 +45,7 @@ func commandHandler(m *discordgo.MessageCreate) {
 		if !contains(skipMan, m.Author.ID) {
 			skipMan = append(skipMan, m.Author.ID)
 			p := usersInVC()
-			if len(skipMan) > (p-1)/2 {
+			if len(skipMan) >= (p-1)/2 {
 				session.ChannelMessageSend(m.ChannelID, "Skipping song...")
 				skip <- true
 				skipMan = skipMan[:0]

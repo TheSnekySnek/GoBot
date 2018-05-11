@@ -1,4 +1,5 @@
 config/config.json
+config/playlist.json
 bin/
 debug
 .vscode/
