@@ -42,8 +42,19 @@ func commandHandler(m *discordgo.MessageCreate) {
 		}
 	}
 	if args[0] == "!skip" {
-		session.ChannelMessageSend(m.ChannelID, "Skipping song...")
-		skip <- true
+		if !contains(skipMan, m.Author.ID) {
+			skipMan = append(skipMan, m.Author.ID)
+			p := usersInVC()
+			if len(skipMan) >= (p-1)/2 {
+				session.ChannelMessageSend(m.ChannelID, "Skipping song...")
+				skip <- true
+				skipMan = skipMan[:0]
+
+			} else {
+				session.ChannelMessageSend(m.ChannelID, strconv.Itoa(len(skipMan))+"/"+strconv.Itoa((p-1)/2)+" Votes to skip")
+			}
+		}
+
 	}
 	if args[0] == "!np" || args[0] == "!song" {
 		em := nowPlaying(curSong)
