@@ -99,7 +99,7 @@ func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, volum
 	}
 	//vo := strconv.FormatFloat(volume/100, 'f', 2, 64)
 	// Create a shell command "object" to run.
-	run := exec.Command("ffmpeg", "-i", filename, "-f", "s16le", "-ar", strconv.Itoa(freq), "-ac", strconv.Itoa(channels), "-analyzeduration", "0", "pipe:1")
+	run := exec.Command("setsid", "ffmpeg", "-i", filename, "-f", "s16le", "-ar", strconv.Itoa(freq), "-ac", strconv.Itoa(channels), "-analyzeduration", "0", "pipe:1")
 	ffmpegout, err := run.StdoutPipe()
 	if err != nil {
 		OnError("StdoutPipe Error", err)
@@ -118,10 +118,8 @@ func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, volum
 	go func() {
 		<-stop
 		fmt.Println("KILL")
-		err = run.Process.Kill()
-		if err != nil {
-			fmt.Println(err.Error())
-		}
+		kill := exec.Command("kill", "-9", strconv.Itoa(run.Process.Pid))
+		kill.Run()
 	}()
 
 	// Send "speaking" packet over the voice websocket
