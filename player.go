@@ -14,6 +14,9 @@ func playYT(link string, playNext bool, u *discordgo.User, callback func(song)) 
 
 	if err != nil {
 		session.ChannelMessageSend(config.TC, "This video isn't available")
+		if playNext {
+			go playYT(pl.Songs[rand.Intn(len(pl.Songs))].URL, true, nil, func(sn song) {})
+		}
 		return
 	}
 
@@ -75,12 +78,12 @@ func play(url string, mod int) {
 					return
 				}
 				if len(pl.Songs) > 0 {
-					playYT(pl.Songs[rand.Intn(len(pl.Songs))].URL, true, nil, func(sn song) {})
+					go playYT(pl.Songs[rand.Intn(len(pl.Songs))].URL, true, nil, func(sn song) {})
 				} else {
 					session.ChannelMessageSend(config.TC, "Playlist is empty. Use !add [url] to add a song")
 				}
-
 			}
+			return
 		}
 	}
 }

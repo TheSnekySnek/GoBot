@@ -75,7 +75,7 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	pl, err = getPlaylist()
 	if len(pl.Songs) > 0 {
-		playYT(pl.Songs[rand.Intn(len(pl.Songs))].URL, true, pl.Songs[0].User, func(sn song) {})
+		go playYT(pl.Songs[rand.Intn(len(pl.Songs))].URL, true, pl.Songs[0].User, func(sn song) {})
 	} else {
 		session.ChannelMessageSend(config.TC, "Playlist is empty. Use !add [url] to add a song")
 	}
