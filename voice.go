@@ -117,7 +117,7 @@ func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, volum
 
 	go func() {
 		<-stop
-		fmt.Println("KILL")
+		fmt.Println(strconv.Itoa(run.Process.Pid))
 		kill := exec.Command("kill", "-9", strconv.Itoa(run.Process.Pid))
 		kill.Run()
 	}()
