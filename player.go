@@ -42,7 +42,7 @@ func playYT(link string, playNext bool, u *discordgo.User, callback func(song)) 
 				if isPlaying {
 					queue = append(queue, nSong)
 					regQueue(queue)
-					session.ChannelMessageSend(config.TC, nSong.Name+" has been added to the queue")
+					session.ChannelMessageSend(config.TC, nSong.Name+"\nHas been added to the queue")
 				} else {
 					curSong = nSong
 					go play(url, modifier)
