@@ -99,7 +99,7 @@ func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, volum
 	}
 	//vo := strconv.FormatFloat(volume/100, 'f', 2, 64)
 	// Create a shell command "object" to run.
-	run := exec.Command("setsid", "ffmpeg", "-i", filename, "-f", "s16le", "-ar", strconv.Itoa(freq), "-ac", strconv.Itoa(channels), "-analyzeduration", "0", "pipe:1")
+	run := exec.Command("ffmpeg", "-i", filename, "-f", "s16le", "-ar", strconv.Itoa(freq), "-ac", strconv.Itoa(channels), "-analyzeduration", "0", "pipe:1")
 	ffmpegout, err := run.StdoutPipe()
 	if err != nil {
 		OnError("StdoutPipe Error", err)
@@ -117,9 +117,7 @@ func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, volum
 
 	go func() {
 		<-stop
-		fmt.Println(strconv.Itoa(run.Process.Pid))
-		kill := exec.Command("kill", "-9", strconv.Itoa(run.Process.Pid))
-		kill.Run()
+		os.Exit(0)
 	}()
 
 	// Send "speaking" packet over the voice websocket
@@ -169,4 +167,12 @@ func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, volum
 			}
 		}
 	}
+}
+
+func Reverse(s string) string {
+	runes := []rune(s)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
 }

@@ -78,8 +78,9 @@ func commandHandler(m *discordgo.MessageCreate) {
 		if !contains(clearMan, m.Author.ID) {
 			clearMan = append(clearMan, m.Author.ID)
 			p := usersInVC()
-			if len(clearMan) > (p-1)/2 {
+			if 1 == 1 {
 				queue = queue[:0]
+				clearQueue()
 				session.ChannelMessageSend(m.ChannelID, "The queue has been cleared")
 				clearMan = clearMan[:0]
 

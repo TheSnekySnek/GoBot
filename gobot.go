@@ -69,12 +69,23 @@ func main() {
 	//Assign our current Voice Connection
 	curVC = vc
 
+	//Load the Queue
+	qu, err := initQueue()
+	if err == nil {
+		queue = qu
+	}
+
 	//load the playlist
 	fmt.Println("Loading Playlist...")
 	//Set the Seed
 	rand.Seed(time.Now().UTC().UnixNano())
 	pl, err = getPlaylist()
-	if len(pl.Songs) > 0 {
+	if len(queue) > 0 {
+		fmt.Println("Playing Queue")
+		curSong, queue = queue[0], queue[1:]
+		regQueue(queue)
+		go play(curSong.VDURL, modifier)
+	} else if len(pl.Songs) > 0 {
 		go playYT(pl.Songs[rand.Intn(len(pl.Songs))].URL, true, pl.Songs[0].User, func(sn song) {})
 	} else {
 		session.ChannelMessageSend(config.TC, "Playlist is empty. Use !add [url] to add a song")
