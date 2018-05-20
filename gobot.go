@@ -23,7 +23,7 @@ var firstBoot = true
 var skipMan []string
 var clearMan []string
 var listeners = false
-var shouldPlay = true
+var shouldPlay = false
 var volume = 100.0
 
 func main() {
@@ -80,7 +80,7 @@ func main() {
 	//Set the Seed
 	rand.Seed(time.Now().UTC().UnixNano())
 	pl, err = getPlaylist()
-	if len(queue) > 0 {
+	/*if len(queue) > 0 {
 		fmt.Println("Playing Queue")
 		curSong, queue = queue[0], queue[1:]
 		regQueue(queue)
@@ -89,7 +89,7 @@ func main() {
 		go playYT(pl.Songs[rand.Intn(len(pl.Songs))].URL, true, pl.Songs[0].User, func(sn song) {})
 	} else {
 		session.ChannelMessageSend(config.TC, "Playlist is empty. Use !add [url] to add a song")
-	}
+	}*/
 
 	go presenceHandler()
 

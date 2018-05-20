@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -61,7 +62,8 @@ func play(url string, mod int) {
 		curSong.Time = time.Now()
 		PlayAudioFile(curVC, url, mod, volume, skip)
 		fmt.Println("Player stopped")
-		isPlaying = false
+		os.Exit(0)
+		/*isPlaying = false
 		skipMan = skipMan[:0]
 		time.Sleep(2 * time.Second)
 		if shouldPlay {
@@ -86,6 +88,6 @@ func play(url string, mod int) {
 				}
 			}
 			return
-		}
+		}*/
 	}
 }

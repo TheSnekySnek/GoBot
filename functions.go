@@ -64,7 +64,7 @@ func checkForListeners() {
 		if len(queue) > 0 {
 			fmt.Println("Playing Queue")
 			curSong, queue = queue[0], queue[1:]
-			time.Sleep(2 * time.Second)
+			regQueue(queue)
 			go play(curSong.VDURL, modifier)
 			//session.ChannelMessageSend(config.TC, "Playing "+curSong.Name)
 		} else {
@@ -86,7 +86,7 @@ func checkForListeners() {
 
 func presenceHandler() {
 	for {
-		time.Sleep(10 * time.Second)
+		time.Sleep(5 * time.Second)
 		go checkForListeners()
 	}
 }
