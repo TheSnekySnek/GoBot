@@ -143,7 +143,7 @@ func PlayAudioFile(v *discordgo.VoiceConnection, filename string, mod int, volum
 	close := make(chan bool)
 	go func() {
 		SendPCM(v, send)
-
+		fmt.Println("STOP2")
 		close <- true
 	}()
 

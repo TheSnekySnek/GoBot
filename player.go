@@ -60,9 +60,8 @@ func play(url string, mod int) {
 	if !isPlaying {
 		isPlaying = true
 		curSong.Time = time.Now()
+		go rope(curSong.Duration)
 		PlayAudioFile(curVC, url, mod, volume, skip)
-		fmt.Println("Player stopped")
-		os.Exit(0)
 		/*isPlaying = false
 		skipMan = skipMan[:0]
 		time.Sleep(2 * time.Second)
@@ -90,4 +89,10 @@ func play(url string, mod int) {
 			return
 		}*/
 	}
+}
+
+func rope(t time.Duration) {
+	fmt.Println(t)
+	time.Sleep(t)
+	os.Exit(0)
 }

@@ -86,7 +86,7 @@ func checkForListeners() {
 
 func presenceHandler() {
 	for {
-		time.Sleep(5 * time.Second)
 		go checkForListeners()
+		time.Sleep(5 * time.Second)
 	}
 }
