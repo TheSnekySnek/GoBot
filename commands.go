@@ -155,6 +155,7 @@ func commandHandler(m *discordgo.MessageCreate) {
 				return
 			}
 			removePlaylist(num)
+			session.ChannelMessageSend(m.ChannelID, "Song has been removed from the playlist")
 		}
 	}
 
